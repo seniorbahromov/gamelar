@@ -1,11 +1,211 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Kosmik O‘yin 🚀</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: black;
+            color: white;
+            overflow: hidden;
+        }
+        #gameArea {
+            width: 90vw;
+            height: 60vh;
+            border: 2px solid white;
+            margin: auto;
+            position: relative;
+            overflow: hidden;
+            background-color: darkblue;
+        }
+        #ship {
+            width: 10vw;
+            height: 10vw;
+            background-color: cyan;
+            position: absolute;
+            bottom: 2vh;
+            left: 40vw;
+        }
+        .bullet {
+            width: 1vw;
+            height: 3vh;
+            background-color: yellow;
+            position: absolute;
+        }
+        .enemy {
+            width: 8vw;
+            height: 8vw;
+            background-color: red;
+            position: absolute;
+        }
+        .explosion {
+            width: 8vw;
+            height: 8vw;
+            background-color: orange;
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.8;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .btn {
+            width: 20vw;
+            height: 6vh;
+            font-size: 18px;
+            margin: 5px;
+            background-color: gray;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:active {
+            background-color: darkgray;
+        }
+        #score {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+        #gameOver {
+            font-size: 24px;
+            font-weight: bold;
+            color: red;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>salom</h1>
+
+    <h1>Kosmik O‘yin 🚀</h1>
+    <p>O‘q otish: "Fire" | Chap/o‘ng harakat: "◀️" va "▶️"</p>
+    
+    <div id="score">Ball: 0</div>
+    <div id="gameOver">O‘yin Tugadi! 🔴</div>
+    
+    <div id="gameArea">
+        <div id="ship"></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="leftBtn">◀️</button>
+        <button class="btn" id="fireBtn">🔥 Fire</button>
+        <button class="btn" id="rightBtn">▶️</button>
+    </div>
+
+    <script>
+        let ship = document.getElementById("ship");
+        let gameArea = document.getElementById("gameArea");
+        let shipX = 40;
+        let bullets = [];
+        let enemies = [];
+        let score = 0;
+        let gameOver = false;
+
+        document.getElementById("leftBtn").addEventListener("click", () => moveShip(-5));
+        document.getElementById("rightBtn").addEventListener("click", () => moveShip(5));
+        document.getElementById("fireBtn").addEventListener("click", shootBullet);
+
+        function moveShip(direction) {
+            if (gameOver) return;
+            shipX += direction;
+            if (shipX < 0) shipX = 0;
+            if (shipX > 80) shipX = 80;
+            ship.style.left = shipX + "vw";
+        }
+
+        function shootBullet() {
+            if (gameOver) return;
+            let bullet = document.createElement("div");
+            bullet.classList.add("bullet");
+            bullet.style.left = (shipX + 4.5) + "vw";
+            bullet.style.bottom = "10vh";
+            gameArea.appendChild(bullet);
+            bullets.push(bullet);
+        }
+
+        function createEnemy() {
+            if (gameOver) return;
+            let enemy = document.createElement("div");
+            enemy.classList.add("enemy");
+            enemy.style.left = Math.floor(Math.random() * 85) + "vw";
+            enemy.style.top = "0px";
+            gameArea.appendChild(enemy);
+            enemies.push(enemy);
+        }
+
+        setInterval(createEnemy, 2000);
+
+        function showExplosion(x, y) {
+            let explosion = document.createElement("div");
+            explosion.classList.add("explosion");
+            explosion.style.left = x + "px";
+            explosion.style.top = y + "px";
+            gameArea.appendChild(explosion);
+            setTimeout(() => explosion.remove(), 300);
+        }
+
+        function updateGame() {
+            if (gameOver) return;
+
+            bullets.forEach((bullet, index) => {
+                let bulletY = parseInt(bullet.style.bottom);
+                if (bulletY > 60) {
+                    bullet.remove();
+                    bullets.splice(index, 1);
+                } else {
+                    bullet.style.bottom = (bulletY + 2) + "vh";
+                }
+            });
+
+            enemies.forEach((enemy, eIndex) => {
+                let enemyY = parseInt(enemy.style.top);
+                if (enemyY > 60) {
+                    enemy.remove();
+                    enemies.splice(eIndex, 1);
+                } else {
+                    enemy.style.top = (enemyY + 1) + "vh";
+                }
+
+                bullets.forEach((bullet, bIndex) => {
+                    let bulletRect = bullet.getBoundingClientRect();
+                    let enemyRect = enemy.getBoundingClientRect();
+
+                    if (
+                        bulletRect.top < enemyRect.bottom &&
+                        bulletRect.bottom > enemyRect.top &&
+                        bulletRect.left < enemyRect.right &&
+                        bulletRect.right > enemyRect.left
+                    ) {
+                        showExplosion(enemyRect.left, enemyRect.top);
+                        enemy.remove();
+                        bullet.remove();
+                        enemies.splice(eIndex, 1);
+                        bullets.splice(bIndex, 1);
+                        score += 10;
+                        document.getElementById("score").innerText = "Ball: " + score;
+                    }
+                });
+
+                let shipRect = ship.getBoundingClientRect();
+                if (
+                    enemyRect.top < shipRect.bottom &&
+                    enemyRect.bottom > shipRect.top &&
+                    enemyRect.left < shipRect.right &&
+                    enemyRect.right > shipRect.left
+                ) {
+                    document.getElementById("gameOver").style.display = "block";
+                    gameOver = true;
+                }
+            });
+        }
+
+        setInterval(updateGame, 30);
+    </script>
+
 </body>
 </html>
